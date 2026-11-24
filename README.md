@@ -72,6 +72,29 @@ multiple of `step`. Both work on any integer type and take a positive divisor or
 `duration.milliseconds` gives a `Duration` in whole milliseconds, for example for a `duration_ms` log field:
 `(ContinuousClock.now - start).milliseconds`.
 
+## Concurrency
+
+```swift
+let pages = try await urls.concurrentMap(maxConcurrency: 4) { try await fetch($0) }
+```
+
+`concurrentMap` runs the closure for every element with at most `maxConcurrency` running at once; without it all run
+at once. The results come back in the order of the elements, and the first error cancels the rest. A closure that
+cannot throw needs no `try`.
+
+```swift
+let downloads = Semaphore(permits: 4)
+
+guard downloads.tryAcquire() else { return }
+Task {
+    defer { downloads.release() }
+    try await download(url)
+}
+```
+
+`Semaphore` limits work that is not one collection, such as tasks started one by one: `tryAcquire()` takes a permit
+when one is free and never waits, and `release()` gives it back.
+
 ## License
 
 Licensed under either of [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE) at your option.
