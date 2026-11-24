@@ -42,6 +42,40 @@ print(errorDescription(error))  // failed to load orders: db query error: connec
 - `errorDescription` is the text to log or store for any error. It uses an error's debug description when there is
   one, because some errors, PostgresNIO's among them, keep the details out of the plain description.
 
+## Retry and timeout
+
+```swift
+struct RateLimited: Retryable {
+    var isRetryable: Bool { true }
+}
+
+@Retry(maxRetries: 4, initialDelay: .milliseconds(250))
+func chargeOrder(_ order: Order) async throws -> Receipt { ... }
+
+@Retry(maxRetries: 1, initialDelay: .seconds(1), jitter: false, timeout: .seconds(120))
+func sendReport(_ report: Report) async throws -> Response { ... }
+
+@Timeout(.seconds(30))
+func fetchPage(_ url: URL) async throws -> Page { ... }
+
+// The functions behind the macros:
+let page = try await retry(maxRetries: 2) { try await withTimeout(.seconds(30)) { try await load(url) } }
+```
+
+- Only errors that conform to `Retryable` and return `isRetryable == true` are retried; every other error is rethrown
+  at once. `maxRetries` counts the retries after the first attempt.
+- The wait before the first retry is `initialDelay`, and each later one is `exponentialBase` times the one before,
+  capped at `maxDelay`. With `jitter` the actual wait is random between zero and that delay. Defaults: 20 retries,
+  1 second, base 2, 180 seconds, jitter on.
+- An error can say how long to wait itself: give it a `retryAfter` (for example from a `Retry-After` header), and that
+  wait replaces the backoff for that retry.
+- A timeout cancels the work and throws `TimeoutError`, which is retryable. `timeout:` on `@Retry` limits each attempt.
+  Cancellation is cooperative: work that ignores it is waited for.
+- Both macros need an `async throws` function. Swift applies only one body macro per function, so combining them is a
+  compile error; use `@Retry(..., timeout:)`.
+- With a timeout the body runs in a child task, so the function's parameters and result, and `self` in a method, must
+  be `Sendable`. `@Retry` without `timeout:` has no such requirement.
+
 ## Strings and bytes
 
 `text.prefix(bytes: 500)` cuts a string to at most that many bytes of UTF-8 without splitting a code point, for limits
