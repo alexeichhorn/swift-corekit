@@ -4,6 +4,7 @@ import SwiftSyntaxMacros
 @main
 struct CoreKitMacrosPlugin: CompilerPlugin {
     let providingMacros: [any Macro.Type] = [
+        PublicInitMacro.self,
         RetryMacro.self,
         TimeoutMacro.self,
     ]

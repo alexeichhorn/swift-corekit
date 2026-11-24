@@ -1,3 +1,12 @@
+/// Generates a `public init` with one parameter per stored property, in declaration order. Swift's own memberwise
+/// initializer is internal, so a public struct that another module creates needs one written out.
+///
+/// A property's initial value becomes the parameter's default; a `let` with an initial value is left out. Unlike
+/// Swift's own initializer, an Optional property is required unless it declares `= nil`. Write a closure property's
+/// type out; behind a type alias it isn't recognized as escaping.
+@attached(member, names: named(init))
+public macro PublicInit() = #externalMacro(module: "CoreKitMacros", type: "PublicInitMacro")
+
 /// Runs the body of an `async throws` function through `retry`, which retries it when it throws a retryable error.
 ///
 /// Can't be combined with `@Timeout`, since Swift applies only one body macro per function; pass `timeout:` instead.
