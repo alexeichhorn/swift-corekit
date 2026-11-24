@@ -5,10 +5,8 @@ public import Foundation
 ///
 /// `URL` and `Data` are written as `JSONEncoder` writes them, as the absolute string and as Base64.
 ///
-/// - Warning: It is 3 to 6 times slower than `JSONEncoder`, more so the longer the strings are. Use it where key order
-///   or the exact bytes matter, and `JSONEncoder` for everything else.
-///
-/// TODO: Write strings in whole runs instead of one character at a time; that is where most of the time goes.
+/// - Warning: It is 1.3 to 3 times slower than `JSONEncoder`, more so with many short values or many escapes. Use it
+///   where key order or the exact bytes matter, and `JSONEncoder` for everything else.
 public struct OrderedJSONEncoder: Sendable {
     /// Leaves a `nil` property out instead of writing it as `null`.
     public var omitsNil: Bool
