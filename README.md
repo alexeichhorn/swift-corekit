@@ -14,6 +14,7 @@ The package is being built; its guides arrive feature by feature.
 
 ```swift
 .product(name: "CoreKit", package: "swift-corekit")
+.product(name: "CoreKitHTTPClient", package: "swift-corekit")
 ```
 
 ## Schemas
@@ -71,6 +72,43 @@ let env = Env.load()
   entries counts as missing.
 - `@Range` on a numeric property stops `load()` when the value, or the default, is outside the range. An unknown enum
   value stops it too.
+
+## HTTP client
+
+`CoreKitHTTPClient` is a separate product, so `CoreKit` alone doesn't pull in AsyncHTTPClient.
+
+```swift
+import AsyncHTTPClient
+import CoreKitHTTPClient
+
+var request = HTTPClientRequest(url: "https://api.example.com/orders")
+request.method = .POST
+request.setBearerAuth(token)
+try request.setJSONBody(order)
+let response = try await HTTPClient.plain.send(request, timeout: .seconds(10))
+let body = try await response.data()  // or response.text()
+```
+
+- `HTTPClient.plain` adds nothing of its own to a request: it has no timeout unless the request sets one, and a
+  refused connection fails at once. It opens a connection for every request a host is sent at once, up to 1024.
+  AsyncHTTPClient's `HTTPClient.shared` is set up like a browser: it retries a refused connection for 90 seconds, ends
+  a request after 90 seconds without data, and queues requests beyond 8 connections to a host.
+- `HTTPClient.plain(connectTimeout: .seconds(10))` makes a client like `plain` that gives up connecting after that
+  time, with `HTTPClientError.connectTimeout`. Keep it in a `static let`: a client is never shut down.
+- `send` returns the response once it has started. `timeout` limits the whole exchange, from connecting until the body
+  has been read: `data()` and `text()` fail with `HTTPClientError.deadlineExceeded` when the body is not complete by
+  then, and `HTTPClient.isTimeout(error)` recognizes that failure. AsyncHTTPClient's own deadline stops at the
+  response's first byte.
+- A header value with a control character, such as a line break, fails `send` with `InvalidHeaderValueError`, which
+  names the header and leaves its value, perhaps a credential, out of the message.
+- `request.setBearerAuth(token)` sets the `Authorization` header, and `try request.setJSONBody(value)` encodes
+  `value` as the body and sets the `Content-Type`. Pass another encoder's method as `encode:` when the default
+  `JSONEncoder` won't do: `encode: OrderedJSONEncoder().encode`.
+- `request.addQuery([(name: "q", value: "New York")])` appends form-encoded fields to the URL's query: a space becomes
+  `+`, and every byte other than an ASCII letter, a digit or one of `*-._` becomes `%XX`.
+- `text()` reads the body as UTF-8 and turns invalid bytes into `�`.
+- `HTTPClient.isConnectionFailure(error)` tells whether a failed request never reached the server (connection
+  refused, name not resolved), which makes it safe to send again.
 
 ## Secrets
 
