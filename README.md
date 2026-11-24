@@ -237,7 +237,8 @@ let settings = try value.decode(Settings.self)
 - `/` and non-ASCII characters are written as they are. A `Double` always has a fraction (`47.0`), an `Int` never.
   A `Decimal` is a number as well (`12.34`, or `5` when whole), exact to the 17 digits a `Double` holds.
 - An integer has to fit in `Int`: encoding a `UInt64` above `Int.max` throws.
-- It is 3 to 6 times slower than `JSONEncoder`. Use it where key order or the exact bytes matter.
+- It is 1.3 to 3 times slower than `JSONEncoder`, more so with many short values or many escapes. Use it where key
+  order or the exact bytes matter.
 - `jsonValue(_:)` gives the encoded value as a `JSONValue` instead of bytes, with the same options.
 - `value.decode(Settings.self)` goes the other way and reads a `JSONValue` as a `Decodable` type.
 - `JSONValue` decodes any JSON document and keeps the key order of the objects it is built from;
