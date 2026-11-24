@@ -16,6 +16,28 @@ The package is being built; its guides arrive feature by feature.
 .product(name: "CoreKit", package: "swift-corekit")
 ```
 
+## Schemas
+
+```swift
+/// A search in the product catalog.
+@Schema
+struct ProductQuery: Codable, Sendable {
+    /// What to search for.
+    @Length(min: 3, max: 200) var query: String
+    @Range(1...20) var pageSize: Int = 10
+    var categories: [Category] = []
+}
+
+ProductQuery.jsonSchema.json      // JSON Schema, keys in declaration order
+ProductQuery.jsonSchema.strict()  // the strict form OpenAI's structured outputs and tools take
+try query.validate()              // page_size: must be at most 20
+```
+
+`@Schema` derives a JSON Schema from a struct or an enum and generates the snake_case `Codable` that matches it:
+doc comments become descriptions, a property's initial value is used when its key is missing, and enums can be
+tagged or untagged unions. `@Length`, `@Range` and `@Pattern` add constraints that go into the schema and into
+`validate()`. See [Schemas](docs/schemas.md).
+
 ## Secrets
 
 ```swift
@@ -118,7 +140,7 @@ let settings = try value.decode(Settings.self)
 - `value.decode(Settings.self)` goes the other way and reads a `JSONValue` as a `Decodable` type.
 - `JSONValue` decodes any JSON document and keeps the key order of the objects it is built from;
   `serialized(pretty:)` writes it in that order. Decoded through `JSONDecoder`, objects lose the document's key order
-  and a whole number becomes `.int` even when written `47.0`.
+  and a whole number becomes `.int` even when written `47.0`. As a `@Schema` property it is documented as any value.
 
 ## Logging
 
