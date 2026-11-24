@@ -6,7 +6,8 @@ let package = Package(
     name: "swift-corekit",
     platforms: [.macOS(.v15)],
     products: [
-        .library(name: "CoreKit", targets: ["CoreKit"])
+        .library(name: "CoreKit", targets: ["CoreKit"]),
+        .library(name: "CoreKitHTTPClient", targets: ["CoreKitHTTPClient"]),
     ],
     dependencies: [
         .package(url: "https://github.com/swiftlang/swift-syntax.git", from: "602.0.0"),
@@ -32,6 +33,14 @@ let package = Package(
                 "CoreKitMacros",
                 .product(name: "Configuration", package: "swift-configuration"),
                 .product(name: "Logging", package: "swift-log"),
+            ]
+        ),
+        .target(
+            name: "CoreKitHTTPClient",
+            dependencies: [
+                .product(name: "AsyncHTTPClient", package: "async-http-client"),
+                .product(name: "NIOCore", package: "swift-nio"),
+                .product(name: "NIOPosix", package: "swift-nio"),
             ]
         ),
         .testTarget(
