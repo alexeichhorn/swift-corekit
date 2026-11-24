@@ -42,6 +42,25 @@ print(errorDescription(error))  // failed to load orders: db query error: connec
 - `errorDescription` is the text to log or store for any error. It uses an error's debug description when there is
   one, because some errors, PostgresNIO's among them, keep the details out of the plain description.
 
+## Public initializers
+
+```swift
+@PublicInit
+public struct Shipment: Sendable {
+    public var orderID: String
+    public var carrier: String?
+    public var items: [String] = []
+}
+
+Shipment(orderID: "42", carrier: nil)
+```
+
+- Swift's own memberwise initializer is internal. `@PublicInit` generates the public one, with the stored properties
+  in declaration order.
+- A property's initial value is the parameter's default. A `let` with an initial value is left out.
+- An Optional property is required unless it declares `= nil`, so a new field can't be forgotten at a call site.
+- Structs only, and every stored property needs a type annotation.
+
 ## Retry and timeout
 
 ```swift
