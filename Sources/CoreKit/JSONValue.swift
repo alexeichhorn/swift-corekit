@@ -59,23 +59,32 @@ public enum JSONValue: Sendable {
         output += close
     }
 
+    /// Appends the text between escapes in one piece. Every byte that needs escaping is ASCII, so each piece ends on a
+    /// scalar boundary; it is sliced from the UTF-8 view because slicing the string itself would round to characters.
     private static func writeString(_ string: String, to output: inout String) {
         output += "\""
-        for scalar in string.unicodeScalars {
-            switch scalar {
-            case "\"": output += "\\\""
-            case "\\": output += "\\\\"
-            case "\n": output += "\\n"
-            case "\r": output += "\\r"
-            case "\t": output += "\\t"
-            case "\u{8}": output += "\\b"
-            case "\u{c}": output += "\\f"
-            case _ where scalar.value < 0x20:
+        let utf8 = string.utf8
+        var runStart = utf8.startIndex
+        for index in utf8.indices {
+            let escaped: String
+            switch Unicode.Scalar(utf8[index]) {
+            case "\"": escaped = "\\\""
+            case "\\": escaped = "\\\\"
+            case "\n": escaped = "\\n"
+            case "\r": escaped = "\\r"
+            case "\t": escaped = "\\t"
+            case "\u{8}": escaped = "\\b"
+            case "\u{c}": escaped = "\\f"
+            case let scalar where scalar.value < 0x20:
                 let hex = String(scalar.value, radix: 16)
-                output += "\\u" + String(repeating: "0", count: 4 - hex.count) + hex
-            default: output.unicodeScalars.append(scalar)
+                escaped = "\\u" + String(repeating: "0", count: 4 - hex.count) + hex
+            default: continue
             }
+            output += Substring(utf8[runStart..<index])
+            output += escaped
+            runStart = utf8.index(after: index)
         }
+        output += Substring(utf8[runStart...])
         output += "\""
     }
 }
