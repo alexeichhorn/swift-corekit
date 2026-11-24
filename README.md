@@ -240,7 +240,8 @@ let settings = try value.decode(Settings.self)
 - It is 1.3 to 3 times slower than `JSONEncoder`, more so with many short values or many escapes. Use it where key
   order or the exact bytes matter.
 - `jsonValue(_:)` gives the encoded value as a `JSONValue` instead of bytes, with the same options.
-- `value.decode(Settings.self)` goes the other way and reads a `JSONValue` as a `Decodable` type.
+- `value.decode(Settings.self)` goes the other way and reads a `JSONValue` as a `Decodable` type, with ISO-8601
+  dates, so the dates `OrderedJSONEncoder` writes read back.
 - `JSONValue` decodes any JSON document and keeps the key order of the objects it is built from;
   `serialized(pretty:)` writes it in that order. Decoded through `JSONDecoder`, objects lose the document's key order
   and a whole number becomes `.int` even when written `47.0`. As a `@Schema` property it is documented as any value.
