@@ -26,18 +26,41 @@ public final class Semaphore: Sendable {
     }
 
     /// Takes a permit when one is free. Never waits.
-    public func tryAcquire() -> Bool {
-        available.withLock { available in
+    public func tryAcquire() -> Permit? {
+        let acquired = available.withLock { available in
             if available == 0 {
                 return false
             }
             available -= 1
             return true
         }
+        return acquired ? Permit(semaphore: self) : nil
     }
 
-    /// Gives a permit back. Call it once for every `tryAcquire()` that returned true.
-    public func release() {
-        available.withLock { $0 += 1 }
+    public nonisolated(nonsending) func withPermitIfAvailable<Result, Failure: Error>(
+        _ body: nonisolated(nonsending) () async throws(Failure) -> Result
+    ) async throws(Failure) -> Result? {
+        guard let permit = tryAcquire() else { return nil }
+        defer { permit.release() }
+        return try await body()
+    }
+
+    public final class Permit: Sendable {
+        private let semaphore: Semaphore
+        private let released = Atomic(false)
+
+        fileprivate init(semaphore: Semaphore) {
+            self.semaphore = semaphore
+        }
+
+        public func release() {
+            if !released.exchange(true, ordering: .relaxed) {
+                semaphore.available.withLock { $0 += 1 }
+            }
+        }
+
+        deinit {
+            release()
+        }
     }
 }
