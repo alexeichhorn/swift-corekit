@@ -313,7 +313,3 @@ Task {
 
 `Semaphore` limits work that is not one collection, such as tasks started one by one: `tryAcquire()` takes a permit
 when one is free and never waits, and `release()` gives it back.
-
-## License
-
-Licensed under either of [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE) at your option.

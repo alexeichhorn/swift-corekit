@@ -97,6 +97,30 @@ declaration order.
 - Schemas render to `JSONValue`, which keeps key order (OpenAI generates in schema order). Send it with
   `serialized()`; its `Encodable` conformance goes through `JSONEncoder`, which reorders keys.
 
+### Parity with OpenAI's SDK
+
+`strict()` is tested to write, byte for byte, what OpenAI's Python SDK (`to_strict_json_schema`) writes for the
+pydantic counterpart of a type. Its second step is a port of the SDK's `_ensure_strict_json_schema`
+(`openai/lib/_pydantic.py`, Apache-2.0). The counterparts are in `scripts/strict-schema-fixtures.py`:
+
+| Swift | pydantic |
+| --- | --- |
+| `@Schema` struct | a model with `extra="forbid"` |
+| `String` enum | `Literal["open", "shipped"]` |
+| `URL` | `str`, since OpenAI rejects the `uri` format |
+| sized integer (`UInt8`) | `int` with `Field(ge=0, le=255)` |
+| `JSONValue` | `Any` |
+| union enum | a `RootModel` of a `Union` |
+| tagged union | a `RootModel` of a `Union` of models that end with `kind: Literal["gift-card"]` |
+| `@Length`, `@Range`, `@Pattern` | `Field(min_length=, max_length=, ge=, le=, pattern=)` |
+
+- A definition is keyed and titled with the schema's name (`ProductQuery.Band`), where pydantic keys and titles a
+  nested class by its short name (`Band`) and replaces characters outside `A-Z a-z 0-9 . - _` in the key. That is the
+  one difference.
+- A tagged union's variant is defined under its payload struct's name, as that struct plus the tag property. A struct
+  can therefore not be a variant and also appear on its own, or under another tag, in the same strict schema; that
+  stops the process.
+
 ## Constraints
 
 ```swift
