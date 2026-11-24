@@ -1,5 +1,5 @@
 {
-  "originHash" : "2e2a830ea30ad1c6d353110d6b2321fdf5100beffbc86e135e5006545d47cddd",
+  "originHash" : "eda570dd58cc3234354eed82cb3c948dbdc6b4ed63cc40a5e9c28ee3196f8250",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -8,6 +8,24 @@
       "state" : {
         "revision" : "d60edb0b2dba4d9f39dce0405e109bd613c3f1e3",
         "version" : "1.37.1"
+      }
+    },
+    {
+      "identity" : "hummingbird",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/hummingbird-project/hummingbird.git",
+      "state" : {
+        "revision" : "aa61ccf3fe6e6c012823a0c08a45d79855a26ee0",
+        "version" : "2.29.0"
+      }
+    },
+    {
+      "identity" : "multipart-kit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/vapor/multipart-kit.git",
+      "state" : {
+        "revision" : "a97308911fec948fd47a3d464465114b648e96b2",
+        "version" : "5.0.0-beta.2"
       }
     },
     {
@@ -116,6 +134,15 @@
       "state" : {
         "revision" : "c7413d967b97aae67c46452bf7645bdb7b200e8e",
         "version" : "1.17.2"
+      }
+    },
+    {
+      "identity" : "swift-metrics",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-metrics.git",
+      "state" : {
+        "revision" : "5da0b6ea2a89dcce222eec559289e298d357d0a5",
+        "version" : "2.13.1"
       }
     },
     {
