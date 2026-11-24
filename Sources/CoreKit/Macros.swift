@@ -45,6 +45,13 @@ public macro Tag(_ value: String) = #externalMacro(module: "CoreKitMacros", type
 @attached(peer)
 public macro UnknownTag() = #externalMacro(module: "CoreKitMacros", type: "UnionCaseMacro")
 
+/// Generates `static func load() -> Self`, which reads each stored property from the environment variable
+/// named after it in SCREAMING_SNAKE_CASE (`databaseURL` → `DATABASE_URL`).
+///
+/// A property initializer is the default, an Optional property is optional, everything else is required.
+@attached(extension, conformances: Sendable, names: named(load))
+public macro EnvConfig() = #externalMacro(module: "CoreKitMacros", type: "EnvConfigMacro")
+
 /// Generates a `public init` with one parameter per stored property, in declaration order. Swift's own memberwise
 /// initializer is internal, so a public struct that another module creates needs one written out.
 ///

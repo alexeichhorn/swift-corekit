@@ -5,6 +5,7 @@ import SwiftSyntaxMacros
 struct CoreKitMacrosPlugin: CompilerPlugin {
     let providingMacros: [any Macro.Type] = [
         SchemaMacro.self,
+        EnvConfigMacro.self,
         PublicInitMacro.self,
         ConstraintMacro.self,
         UnionCaseMacro.self,
