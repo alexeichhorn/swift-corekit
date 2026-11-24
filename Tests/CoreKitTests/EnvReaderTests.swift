@@ -125,3 +125,21 @@ struct ServiceEnv {
     }
     #expect(message(noHosts).contains("Missing required environment variable: COREKIT_TEST_SERVICE_HOSTS"))
 }
+
+/// A comment after a quoted value is not part of the value, and the quotes go either way.
+@Test func envReaderDropsACommentAfterAQuotedValue() throws {
+    let path = FileManager.default.temporaryDirectory.appending(path: "corekit-\(UUID()).env").path
+    try """
+    COREKIT_TEST_DOUBLE="a b" # note
+    COREKIT_TEST_SINGLE='c' # don't
+    COREKIT_TEST_HASH="d # e"
+    COREKIT_TEST_INNER="say "hi""
+    """.write(toFile: path, atomically: true, encoding: .utf8)
+    defer { try? FileManager.default.removeItem(atPath: path) }
+
+    let reader = EnvReader(dotEnvPath: path)
+    #expect(reader.required("COREKIT_TEST_DOUBLE") as String == "a b")
+    #expect(reader.required("COREKIT_TEST_SINGLE") as String == "c")
+    #expect(reader.required("COREKIT_TEST_HASH") as String == "d # e")
+    #expect(reader.required("COREKIT_TEST_INNER") as String == #"say "hi""#)
+}
