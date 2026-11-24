@@ -126,3 +126,28 @@ private struct Reopened: Encodable {
     let value = try JSONDecoder().decode(JSONValue.self, from: Data("[47.0,47.5,-3]".utf8))
     #expect(value.serialized() == "[47,47.5,-3]")
 }
+
+@Test func orderedEncoderWritesLongStringsThatMixPlainTextAndEscapes() throws {
+    let segment = "order 47: \"Zürich 東京\"\n\tpaid\\ 👍🏽 e\u{301}\u{1}/"
+    let escaped = #"order 47: \"Zürich 東京\"\n\tpaid\\ 👍🏽 e\#u{301}\u0001/"#
+    let encoded = String(decoding: try OrderedJSONEncoder().encode(String(repeating: segment, count: 200)), as: UTF8.self)
+    #expect(encoded == "\"" + String(repeating: escaped, count: 200) + "\"")
+}
+
+@Test func orderedEncoderEscapesAtTheStartAndEnd() throws {
+    let cases = [
+        ("", #""""#),
+        ("\"", #""\"""#),
+        ("\n", #""\n""#),
+        ("\\\\", #""\\\\""#),
+        ("\"order\"", #""\"order\"""#),
+        ("\u{0}order\u{1f}", #""\u0000order\u001f""#),
+        ("\n東京", #""\n東京""#),
+        ("東京\t", #""東京\t""#),
+        // A combining mark joins the quote into one character, yet only the quote is escaped.
+        ("\"\u{301}", #""\"\#u{301}""#),
+    ]
+    for (text, expected) in cases {
+        #expect(String(decoding: try OrderedJSONEncoder().encode(text), as: UTF8.self) == expected)
+    }
+}
