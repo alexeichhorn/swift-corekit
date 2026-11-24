@@ -106,6 +106,17 @@ private struct Reopened: Encodable {
     #expect(throws: DecodingError.self) { try value.decode(Point.self) }
 }
 
+@Test func jsonValueDecodesISO8601Dates() throws {
+    struct Order: Codable, Equatable {
+        var placedAt: Date
+    }
+    let order = Order(placedAt: Date(timeIntervalSince1970: 1_767_323_045))
+    #expect(try OrderedJSONEncoder().jsonValue(order).decode(Order.self) == order)
+
+    let withFraction: JSONValue = ["placedAt": "2026-01-02T03:04:05.125Z"]
+    #expect(try withFraction.decode(Order.self) == Order(placedAt: Date(timeIntervalSince1970: 1_767_323_045.125)))
+}
+
 /// An integer that doesn't fit in `Int` has no exact JSON number here, so encoding it throws.
 @Test func orderedEncoderRefusesIntegersBeyondInt() throws {
     #expect(String(decoding: try OrderedJSONEncoder().encode([UInt64(Int.max)]), as: UTF8.self) == "[9223372036854775807]")
