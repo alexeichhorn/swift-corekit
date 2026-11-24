@@ -76,6 +76,31 @@ let page = try await retry(maxRetries: 2) { try await withTimeout(.seconds(30)) 
 - With a timeout the body runs in a child task, so the function's parameters and result, and `self` in a method, must
   be `Sendable`. `@Retry` without `timeout:` has no such requirement.
 
+## Ordered JSON
+
+```swift
+let data = try OrderedJSONEncoder().encode(order)
+let pretty = try OrderedJSONEncoder(omitsNil: true, prettyPrinted: true, lowercaseUUIDs: true).encode(order)
+let tree = try OrderedJSONEncoder().jsonValue(order)
+let value = try JSONDecoder().decode(JSONValue.self, from: data)
+let settings = try value.decode(Settings.self)
+```
+
+- `OrderedJSONEncoder` writes object keys in the order the type encodes them, which for synthesized `Codable` is
+  declaration order. `JSONEncoder` doesn't keep it.
+- A `nil` property is written as `null` unless `omitsNil` is set. `Date` is ISO-8601 or what a
+  `dateEncoding: .custom { ... }` closure returns; `UUID` is uppercase, as with `JSONEncoder`, or lowercase. `URL` is
+  its absolute string and `Data` is Base64.
+- `/` and non-ASCII characters are written as they are. A `Double` always has a fraction (`47.0`), an `Int` never.
+  A `Decimal` is a number as well (`12.34`, or `5` when whole), exact to the 17 digits a `Double` holds.
+- An integer has to fit in `Int`: encoding a `UInt64` above `Int.max` throws.
+- It is 3 to 6 times slower than `JSONEncoder`. Use it where key order or the exact bytes matter.
+- `jsonValue(_:)` gives the encoded value as a `JSONValue` instead of bytes, with the same options.
+- `value.decode(Settings.self)` goes the other way and reads a `JSONValue` as a `Decodable` type.
+- `JSONValue` decodes any JSON document and keeps the key order of the objects it is built from;
+  `serialized(pretty:)` writes it in that order. Decoded through `JSONDecoder`, objects lose the document's key order
+  and a whole number becomes `.int` even when written `47.0`.
+
 ## Logging
 
 `CompactLogHandler` is a swift-log handler that writes one coloured line per message to standard output, in the
