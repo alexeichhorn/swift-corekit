@@ -55,6 +55,23 @@ Use it where the result is hashed or compared with a value another system trimme
 `date.rfc3339` writes a date in UTC with a numeric zone, `2026-11-14T12:34:56+00:00`, and a fraction of three or six
 digits only when the date has one.
 
+## Collections
+
+`products.sorted(by: \.name)` sorts by a property in ascending order, in place of a comparison closure;
+`sorted(by: \.name, descending: true)` sorts the other way.
+
+`orders.uniqued(on: \.userID)` keeps the first element of each key, in the order of the elements.
+
+`names[safe: 3]` is the element at an index, or `nil` when the collection has none there, where `names[3]` would crash.
+
+## Numbers and durations
+
+`value.dividedRoundingUp(by: divisor)` divides and rounds up, and `value.roundedUp(toMultipleOf: step)` gives the next
+multiple of `step`. Both work on any integer type and take a positive divisor or step.
+
+`duration.milliseconds` gives a `Duration` in whole milliseconds, for example for a `duration_ms` log field:
+`(ContinuousClock.now - start).milliseconds`.
+
 ## License
 
 Licensed under either of [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE) at your option.
