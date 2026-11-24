@@ -55,23 +55,55 @@ private actor RunningCount {
     #expect(ContinuousClock.now - started < .seconds(10))
 }
 
-@Test func semaphoreHandsOutItsPermitsAndTakesThemBack() {
+@Test func semaphoreHandsOutItsPermitsAndTakesThemBack() throws {
     let semaphore = Semaphore(permits: 2)
 
-    #expect(semaphore.tryAcquire())
-    #expect(semaphore.tryAcquire())
-    #expect(!semaphore.tryAcquire())
+    let first = try #require(semaphore.tryAcquire())
+    let second = try #require(semaphore.tryAcquire())
+    #expect(semaphore.tryAcquire() == nil)
     #expect(semaphore.availablePermits == 0)
 
-    semaphore.release()
+    // A permit goes back once, however often it is released.
+    first.release()
+    first.release()
     #expect(semaphore.availablePermits == 1)
-    #expect(semaphore.tryAcquire())
+
+    second.release()
+    #expect(semaphore.availablePermits == 2)
+}
+
+@Test func semaphoreTakesBackAPermitNobodyReleased() {
+    let semaphore = Semaphore(permits: 1)
+
+    withExtendedLifetime(semaphore.tryAcquire()) { permit in
+        #expect(permit != nil)
+        #expect(semaphore.availablePermits == 0)
+    }
+    #expect(semaphore.availablePermits == 1)
+}
+
+@Test func semaphoreRunsABodyWithAPermitWhenOneIsFree() async throws {
+    let semaphore = Semaphore(permits: 1)
+
+    struct Failed: Error {}
+    await #expect(throws: Failed.self) {
+        try await semaphore.withPermitIfAvailable {
+            #expect(semaphore.availablePermits == 0)
+            throw Failed()
+        }
+    }
+    #expect(semaphore.availablePermits == 1)
+
+    let permit = try #require(semaphore.tryAcquire())
+    let result = await semaphore.withPermitIfAvailable { "ran" }
+    #expect(result == nil)
+    permit.release()
 }
 
 /// Many tasks ask at once; no more than the permits may get one.
 @Test func semaphoreNeverHandsOutMoreThanItsPermits() async {
     let semaphore = Semaphore(permits: 3)
-    let acquired = await (0..<200).concurrentMap { _ in semaphore.tryAcquire() }
+    let permits = await (0..<200).concurrentMap { _ in semaphore.tryAcquire() }
 
-    #expect(acquired.count(where: \.self) == 3)
+    #expect(permits.count { $0 != nil } == 3)
 }
