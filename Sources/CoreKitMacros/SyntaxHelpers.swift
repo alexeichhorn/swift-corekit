@@ -11,6 +11,13 @@ struct StoredProperty {
     let isLet: Bool
     let documentation: String?
     let attributes: AttributeListSyntax
+
+    /// The `ValidationRule` expressions of the property's constraint attributes. A malformed attribute contributes
+    /// none; it reports the error itself.
+    var rules: [String] {
+        guard let type else { return [] }
+        return attributes.compactMap { $0.as(AttributeSyntax.self) }.flatMap { (try? ConstraintMacro.rules(of: $0, on: type)) ?? [] }
+    }
 }
 
 extension DeclGroupSyntax {

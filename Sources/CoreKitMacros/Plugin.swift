@@ -4,7 +4,10 @@ import SwiftSyntaxMacros
 @main
 struct CoreKitMacrosPlugin: CompilerPlugin {
     let providingMacros: [any Macro.Type] = [
+        SchemaMacro.self,
         PublicInitMacro.self,
+        ConstraintMacro.self,
+        UnionCaseMacro.self,
         RetryMacro.self,
         TimeoutMacro.self,
     ]

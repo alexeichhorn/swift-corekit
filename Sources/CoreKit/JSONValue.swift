@@ -162,3 +162,23 @@ extension JSONValue: Decodable {
         }
     }
 }
+
+extension JSONValue {
+    /// A property's initial value as its default in a schema: `8`, `"draft"`, `[]`, or the raw value of an enum case.
+    /// `nil` for a missing value and for one that has no JSON form.
+    public static func schemaDefault(_ value: Any?) -> JSONValue? {
+        switch value {
+        case nil: return nil
+        case let value as Bool: return .bool(value)
+        case let value as any BinaryInteger: return Int(exactly: value).map(JSONValue.int)
+        case let value as Double: return .double(value)
+        case let value as Float: return .double(Double(value))
+        case let value as String: return .string(value)
+        case let value as any RawRepresentable: return schemaDefault(value.rawValue)
+        case let value as any Encodable:
+            guard let data = try? OrderedJSONEncoder().encode(value) else { return nil }
+            return try? JSONDecoder().decode(JSONValue.self, from: data)
+        default: return nil
+        }
+    }
+}
