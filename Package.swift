@@ -1,4 +1,5 @@
 // swift-tools-version:6.4
+import CompilerPluginSupport
 import PackageDescription
 
 let package = Package(
@@ -11,7 +12,20 @@ let package = Package(
         .package(url: "https://github.com/swiftlang/swift-syntax.git", from: "602.0.0")
     ],
     targets: [
-        .target(name: "CoreKit"),
+        .macro(
+            name: "CoreKitMacros",
+            dependencies: [
+                .product(name: "SwiftSyntax", package: "swift-syntax"),
+                .product(name: "SwiftSyntaxBuilder", package: "swift-syntax"),
+                .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
+                .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
+                .product(name: "SwiftDiagnostics", package: "swift-syntax"),
+            ]
+        ),
+        .target(
+            name: "CoreKit",
+            dependencies: ["CoreKitMacros"]
+        ),
         .testTarget(
             name: "CoreKitTests",
             dependencies: ["CoreKit"]
