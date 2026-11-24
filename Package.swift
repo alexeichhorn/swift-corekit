@@ -9,7 +9,8 @@ let package = Package(
         .library(name: "CoreKit", targets: ["CoreKit"])
     ],
     dependencies: [
-        .package(url: "https://github.com/swiftlang/swift-syntax.git", from: "602.0.0")
+        .package(url: "https://github.com/swiftlang/swift-syntax.git", from: "602.0.0"),
+        .package(url: "https://github.com/apple/swift-log.git", from: "1.17.0"),
     ],
     targets: [
         .macro(
@@ -24,7 +25,10 @@ let package = Package(
         ),
         .target(
             name: "CoreKit",
-            dependencies: ["CoreKitMacros"]
+            dependencies: [
+                "CoreKitMacros",
+                .product(name: "Logging", package: "swift-log"),
+            ]
         ),
         .testTarget(
             name: "CoreKitTests",
