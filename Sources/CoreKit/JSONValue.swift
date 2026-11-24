@@ -102,9 +102,12 @@ extension JSONValue: ExpressibleByNilLiteral, ExpressibleByBooleanLiteral, Expre
 }
 
 extension JSONValue {
-    /// Reads the value as a `Decodable` type: `let settings = try payload.decode(Settings.self)`.
+    /// Reads the value as a `Decodable` type: `let settings = try payload.decode(Settings.self)`. Dates are read as
+    /// ISO-8601, with or without fractional seconds, as `OrderedJSONEncoder` and route responses write them.
     public func decode<Value: Decodable>(_ type: Value.Type = Value.self) throws -> Value {
-        try JSONDecoder().decode(type, from: Data(serialized().utf8))
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        return try decoder.decode(type, from: Data(serialized().utf8))
     }
 }
 
