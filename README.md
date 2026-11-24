@@ -4,9 +4,9 @@ Small building blocks for Swift backends: JSON schemas and validation from Swift
 configuration, retries and timeouts, ordered JSON, compact logging, an HTTP client without surprises, and
 FastAPI-style routes with an OpenAPI document on Hummingbird 2.
 
-The package is being built; its guides arrive feature by feature.
-
 ## Installation
+
+Requires Swift 6.4 and runs on macOS 15 or later and on Linux.
 
 ```swift
 .package(url: "https://github.com/alexeichhorn/swift-corekit.git", branch: "main")
