@@ -40,6 +40,9 @@ alone, never a project that uses it.
   stops the process runs it in an exit test (`#expect(processExitsWith:)`).
 - Macro expansion tests live in `Tests/CoreKitMacrosTests` and call `assertExpansion`. A diagnostic that only a real
   build shows, such as a `Sendable` error in expanded code, gets a compile-fail fixture.
+- `strict()` writes exactly what OpenAI's Python SDK writes for the pydantic counterpart. A test of its output takes
+  the expected text from the SDK: add the counterpart to `scripts/strict-schema-fixtures.py` and run it, as its
+  docstring says, to write `Tests/StrictSchemaFixtures`.
 - A compile-fail fixture in `Tests/CompileFail/Sources/Fixtures` marks each line that must fail with
   `// error: <part of the message>`. `CompileFailTests` builds the fixture package once and fails on a marked line
   without that error and on an error without a mark. A fixture without marks must compile.
