@@ -14,8 +14,17 @@ The package is being built; its guides arrive feature by feature.
 
 ```swift
 .product(name: "CoreKit", package: "swift-corekit")
+.product(name: "CoreKitHummingbird", package: "swift-corekit")
 .product(name: "CoreKitHTTPClient", package: "swift-corekit")
 ```
+
+- `CoreKit`: `@Schema`, `@EnvConfig`, `@PublicInit`, `@Retry`/`@Timeout`, ordered JSON, logging and small helpers. No
+  HTTP framework.
+- `CoreKitHummingbird`: routers and `@GET`/`@POST` handler functions on Hummingbird 2, with `/openapi.json` and
+  `/docs` derived from the handlers.
+- `CoreKitHTTPClient`: a plain shared AsyncHTTPClient client with `send` and `data()` for outgoing requests.
+
+Multipart uploads use `multipart-kit`, pinned to exactly `5.0.0-beta.2`; see [Routes](docs/routes.md#uploads).
 
 ## Schemas
 
@@ -38,6 +47,27 @@ try query.validate()              // page_size: must be at most 20
 doc comments become descriptions, a property's initial value is used when its key is missing, and enums can be
 tagged or untagged unions. `@Length`, `@Range` and `@Pattern` add constraints that go into the schema and into
 `validate()`. See [Schemas](docs/schemas.md).
+
+## Routes
+
+```swift
+let orderRouter = APIRouter("/orders", tag: .orders)
+
+/// Creates an order.
+@POST(orderRouter, "/")
+func createOrder(user: AuthUser, body: CreateOrderInput) async throws -> OrderResponse { ... }
+
+@GET(orderRouter, "/:orderID")
+func showOrder(user: AuthUser, orderID: Int64) async throws -> OrderResponse { ... }
+
+let router = Router()
+try OpenAPIDocument(title: "Shop API", version: "0.1.0", routers: [orderRouter]).register(on: router)
+```
+
+Handlers are top-level functions whose parameters bind by shape: a path segment, the JSON `body`, a multipart `form`,
+the `query`, or a `RequestResolvable` such as the authenticated user. Nobody lists the handlers: each route macro
+records itself in a section of the binary, found through dyld on macOS and through the ELF section on Linux.
+`register(on:)` adds every route plus `/openapi.json` and Swagger UI at `/docs`. See [Routes](docs/routes.md).
 
 ## Environment configuration
 
