@@ -6,7 +6,8 @@ public struct ByteCount: Sendable, ExpressibleByIntegerLiteral, ExpressibleByStr
         self.bytes = bytes
     }
 
-    /// Accepts `b`, `kb`, `mb` and `gb` (powers of 1024), case-insensitively. Anything else is a programming error.
+    /// Accepts `b`, `kb`, `mb` and `gb` (powers of 1024), case-insensitively. Anything else is a programming error, which
+    /// the route macros report at compile time.
     public init(stringLiteral value: String) {
         let units: [(suffix: String, factor: Int)] = [("gb", 1 << 30), ("mb", 1 << 20), ("kb", 1 << 10), ("b", 1)]
         let lowercased = value.lowercased()
