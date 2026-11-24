@@ -1,3 +1,4 @@
+import SwiftParser
 import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
@@ -49,9 +50,15 @@ public struct RouteMacro: PeerMacro {
             throw MacroError("@\(method) needs a router and a string literal path, e.g. @\(method)(orderRouter, \"/\")")
         }
         let router = unlabeled[0].trimmedDescription
+        let maxBodySize = arguments.first { $0.label?.text == "maxBodySize" }?.expression
+        // `ByteCount` reads the literal on every request and traps on text it can't read, so it's checked here.
+        if let size = maxBodySize?.as(StringLiteralExprSyntax.self)?.representedLiteralValue, byteCount(size) == nil {
+            throw MacroError(
+                "maxBodySize \"\(size)\" isn't a byte count: write a whole number with an optional b, kb, mb or gb, e.g. \"10mb\""
+            )
+        }
         // Only passed when given, so plain routes stay short.
-        let bodyLimit =
-            arguments.first { $0.label?.text == "maxBodySize" }.map { ", maxBodySize: \($0.expression.trimmedDescription)" } ?? ""
+        let bodyLimit = maxBodySize.map { ", maxBodySize: \($0.trimmedDescription)" } ?? ""
         let headOption = arguments.first { $0.label?.text == "head" }.map { "\n        head: \($0.expression.trimmedDescription)," } ?? ""
         let pathParameterNames = path.split(separator: "/").filter { $0.hasPrefix(":") }.map { String($0.dropFirst()) }
 
@@ -118,6 +125,18 @@ public struct RouteMacro: PeerMacro {
                 }
             )
             """
+    }
+
+    /// The bytes `ByteCount(stringLiteral:)` reads from `text`, or `nil` for text it can't read or a size beyond `Int`.
+    private static func byteCount(_ text: String) -> Int? {
+        let units: [(suffix: String, factor: Int)] = [("gb", 1 << 30), ("mb", 1 << 20), ("kb", 1 << 10), ("b", 1)]
+        let lowercased = text.lowercased()
+        let (number, factor) =
+            units.first { lowercased.hasSuffix($0.suffix) }.map { (lowercased.dropLast($0.suffix.count), $0.factor) }
+            ?? (Substring(lowercased), 1)
+        guard let count = Int(number) else { return nil }
+        let (bytes, overflow) = count.multipliedReportingOverflow(by: factor)
+        return overflow ? nil : bytes
     }
 
     /// The `Endpoint.ResponseKind` and the `RouteBinding` function that turns the handler's result into a response.
