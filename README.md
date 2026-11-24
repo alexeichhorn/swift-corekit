@@ -9,7 +9,7 @@ FastAPI-style routes with an OpenAPI document on Hummingbird 2.
 Requires Swift 6.4 and runs on macOS 15 or later and on Linux.
 
 ```swift
-.package(url: "https://github.com/alexeichhorn/swift-corekit.git", branch: "main")
+.package(url: "https://github.com/alexeichhorn/swift-corekit.git", from: "0.2.0")
 ```
 
 ```swift
