@@ -172,7 +172,7 @@ extension JSONValue {
         case let value as Bool: return .bool(value)
         case let value as any BinaryInteger: return Int(exactly: value).map(JSONValue.int)
         case let value as Double: return .double(value)
-        case let value as Float: return .double(Double(value))
+        case let value as Float: return .double(Double(value.description)!)
         case let value as String: return .string(value)
         case let value as any RawRepresentable: return schemaDefault(value.rawValue)
         case let value as any Encodable:

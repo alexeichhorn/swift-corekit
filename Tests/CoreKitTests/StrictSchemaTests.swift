@@ -137,3 +137,12 @@ struct Size: SchemaRepresentable {
             """
     )
 }
+
+@Schema
+struct Settings: Codable {
+    var ratio: Float = 0.1
+}
+
+@Test func floatDefaultMatchesTheEncodedValue() {
+    #expect(Settings.jsonSchema.strict().serialized().contains(#""ratio":{"default":0.1,"#))
+}
