@@ -42,6 +42,19 @@ print(errorDescription(error))  // failed to load orders: db query error: connec
 - `errorDescription` is the text to log or store for any error. It uses an error's debug description when there is
   one, because some errors, PostgresNIO's among them, keep the details out of the plain description.
 
+## Strings and bytes
+
+`text.prefix(bytes: 500)` cuts a string to at most that many bytes of UTF-8 without splitting a code point, for limits
+that count bytes.
+
+`text.trimmingWhitespace()` removes the whitespace at both ends, where whitespace is Unicode's `White_Space` property.
+Use it where the result is hashed or compared with a value another system trimmed.
+
+`bytes.hex` writes any sequence of bytes, such as a hash, as lowercase hexadecimal.
+
+`date.rfc3339` writes a date in UTC with a numeric zone, `2026-11-14T12:34:56+00:00`, and a fraction of three or six
+digits only when the date has one.
+
 ## License
 
 Licensed under either of [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE) at your option.
