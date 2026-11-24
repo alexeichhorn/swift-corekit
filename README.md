@@ -305,12 +305,22 @@ cannot throw needs no `try`.
 ```swift
 let downloads = Semaphore(permits: 4)
 
-guard downloads.tryAcquire() else { return }
+guard let permit = downloads.tryAcquire() else { return }
 Task {
-    defer { downloads.release() }
+    defer { permit.release() }
     try await download(url)
 }
 ```
 
-`Semaphore` limits work that is not one collection, such as tasks started one by one: `tryAcquire()` takes a permit
-when one is free and never waits, and `release()` gives it back.
+`Semaphore` limits work that is not one collection, such as tasks started one by one. `tryAcquire()` takes a permit
+when one is free and returns `nil` when none is; it never waits. `permit.release()` gives the permit back once;
+further calls do nothing. A permit nobody released goes back when it is deallocated, but only as a backstop: Swift
+may deallocate it after its last use, before the work ends. Keep the permit and release it, or let the closure form do
+both:
+
+```swift
+let file = try await downloads.withPermitIfAvailable { try await download(url) }
+```
+
+`withPermitIfAvailable` takes a permit without waiting, runs the closure on the caller's isolation and gives the permit
+back when it returns or throws. It returns `nil`, without running the closure, when no permit is free.
