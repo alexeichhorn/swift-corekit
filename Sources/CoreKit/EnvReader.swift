@@ -67,14 +67,22 @@ public struct EnvReader {
             guard !line.hasPrefix("#"), let separator = line.firstIndex(of: "=") else { continue }
             let key = line[..<separator].trimmingCharacters(in: .whitespaces)
             var value = line[line.index(after: separator)...].trimmingCharacters(in: .whitespaces)
-            if let quote = value.first, quote == "\"" || quote == "'", value.count >= 2, value.last == quote {
-                value = String(value.dropFirst().dropLast())
+            if let quote = value.first, quote == "\"" || quote == "'",
+                let end = value.indices.dropFirst().first(where: { value[$0] == quote && endsValue(value[value.index(after: $0)...]) })
+            {
+                value = String(value[value.index(after: value.startIndex)..<end])
             } else if let comment = value.range(of: " #") {
                 value = value[..<comment.lowerBound].trimmingCharacters(in: .whitespaces)
             }
             values[key] = value
         }
         return values
+    }
+
+    /// Whether the text after a closing quote leaves the value: nothing or a `#` comment.
+    private static func endsValue(_ rest: Substring) -> Bool {
+        let rest = rest.trimmingCharacters(in: .whitespaces)
+        return rest.isEmpty || rest.hasPrefix("#")
     }
 }
 
