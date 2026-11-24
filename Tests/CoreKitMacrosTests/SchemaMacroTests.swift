@@ -322,6 +322,65 @@ private let macros = [
     )
 }
 
+@Test func tagValueInterpretsEscapes() {
+    assertExpansion(
+        """
+        @Schema(tag: "type")
+        enum Event: Decodable {
+            @Tag("order\\u{2E}created") case orderCreated(Order)
+            @UnknownTag case other
+        }
+        """,
+        expandedSource: """
+            enum Event: Decodable {
+                case orderCreated(Order)
+                case other
+
+                enum CodingKeys: String, CodingKey {
+                    case tag = "type"
+                }
+
+                init(from decoder: any Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    switch try container.decode(String.self, forKey: .tag) {
+                    case "order.created":
+                        self = .orderCreated(try Order(from: decoder))
+                    default:
+                        self = .other
+                    }
+                }
+            }
+
+            extension Event: CoreKit.SchemaRepresentable {
+                public static var jsonSchema: CoreKit.JSONSchema {
+                    .taggedUnion(
+                        name: "Event",
+                        description: nil,
+                        tag: "type",
+                        variants: [
+                            ("order.created", .associatedValue(of: Self.orderCreated)),
+                        ]
+                    )
+                }
+
+                public func validate(
+                    _ rules: [CoreKit.ValidationRule],
+                    at path: [CoreKit.ValidationIssue.PathElement],
+                    into issues: inout [CoreKit.ValidationIssue]
+                ) {
+                    switch self {
+                    case .orderCreated(let value):
+                        value.validate(rules, at: path, into: &issues)
+                    case .other:
+                        break
+                    }
+                }
+            }
+            """,
+        macros: macros
+    )
+}
+
 @Test func taggedEnumRejectsEncodingAnUnknownTagCase() {
     assertExpansion(
         """
