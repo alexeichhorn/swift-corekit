@@ -120,7 +120,8 @@ bodies are decoded with ISO-8601 dates, matching the schemas.
 ## Options
 
 - `maxBodySize:` on `@POST`/`@PUT`/`@PATCH` replaces the 2 MB body size limit for `body`/`form` (a `ByteCount`:
-  `"512kb"`, `"10mb"`, units up to `gb` in powers of 1024); larger bodies get 413.
+  `"512kb"`, `"10mb"`, units up to `gb` in powers of 1024); larger bodies get 413. A string the macro can't read as
+  a whole number of bytes, such as `"10 mb"` or `"1.5mb"`, is a compile error.
 - `head: true` on `@GET` makes the route answer `HEAD` too, with the same status and headers and no body:
   `@GET(router, "/ping", head: true)` for a health check that monitors probe with `HEAD`. The OpenAPI document lists
   the `GET` only.
