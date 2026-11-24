@@ -17,16 +17,6 @@ Every change lands as commits in this order:
 A committed test changes only when the test itself was wrong. That is its own commit, `Fix test <name>`, and the
 message says what was wrong.
 
-## The kit baseline
-
-Until `0.1.0`, the repo is rebuilt from an existing implementation, the kit. Its snapshot is the untracked folder
-`.reference/kit`.
-
-- Bring its code over as it is, feature by feature, each behind its tests. Its public API and behaviour are the
-  baseline.
-- A behaviour its README promises without a kit test gets that test written first.
-- An improvement or a bug you notice becomes a GitHub issue; the code comes over unchanged.
-
 ## Public repo
 
 Examples, tests and docs use generic domains: orders, products, users. Code, comments and docs describe the library
