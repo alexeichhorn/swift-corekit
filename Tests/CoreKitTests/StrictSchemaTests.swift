@@ -81,12 +81,13 @@ enum Shape: Codable, Equatable {
 
     #expect(
         Shape.jsonSchema.strict().serialized() == """
-            {"anyOf":[\
-            {"additionalProperties":false,"properties":{"radius":{"title":"Radius","type":"number"},\
-            "kind":{"const":"circle","title":"Kind","type":"string"}},"required":["radius","kind"],"type":"object"},\
-            {"additionalProperties":false,"properties":{"width":{"title":"Width","type":"number"},\
+            {"$defs":{"Shape.Circle":{"additionalProperties":false,"properties":{"radius":{"title":"Radius","type":"number"},\
+            "kind":{"const":"circle","title":"Kind","type":"string"}},"required":["radius","kind"],"title":"Shape.Circle","type":"object"},\
+            "Shape.RoundedRect":{"additionalProperties":false,"properties":{"width":{"title":"Width","type":"number"},\
             "corner_radius":{"anyOf":[{"type":"number"},{"type":"null"}],"title":"Corner Radius"},\
-            "kind":{"const":"rounded_rect","title":"Kind","type":"string"}},"required":["width","corner_radius","kind"],"type":"object"}],\
+            "kind":{"const":"rounded_rect","title":"Kind","type":"string"}},"required":["width","corner_radius","kind"],\
+            "title":"Shape.RoundedRect","type":"object"}},\
+            "anyOf":[{"$ref":"#/$defs/Shape.Circle"},{"$ref":"#/$defs/Shape.RoundedRect"}],\
             "description":"A shape to draw.","title":"Shape"}
             """
     )

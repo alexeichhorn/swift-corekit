@@ -11,6 +11,11 @@ extension JSONSchema {
     /// sorted, and keys added for strict mode follow at the end.
     ///
     /// `[String: T]` maps can't be expressed in strict mode; OpenAI rejects schemas that contain them.
+    ///
+    /// The second step is a port of the SDK's `_ensure_strict_json_schema` (`openai/lib/_pydantic.py`, Apache-2.0).
+    /// `StrictSchemaParityTests` compares the output with what the SDK writes for the pydantic counterparts in
+    /// `scripts/strict-schema-fixtures.py`, byte for byte. One difference stays: a definition is keyed and titled with
+    /// the schema's name, where pydantic keys a nested class by its short name.
     public func strict() -> JSONValue {
         var writer = StrictSchemaWriter()
         let schema = writer.modelJSONSchema(of: self)
@@ -35,6 +40,8 @@ private struct StrictSchemaWriter {
     private static let stringFormats: Set<String> = ["date-time", "time", "date", "duration", "email", "hostname", "ipv4", "ipv6", "uuid"]
 
     private var definitions: [String: JSONValue] = [:]
+    /// The definitions that are a tagged union's variant, a payload struct with the tag property added.
+    private var taggedVariantNames: Set<String> = []
 
     mutating func modelJSONSchema(of schema: JSONSchema) -> JSONValue {
         var root = definition(of: schema) ?? inline(schema)
@@ -56,11 +63,8 @@ private struct StrictSchemaWriter {
         case .union(let name, let description, let variants):
             return Self.described(description) + [("anyOf", .array(variants.map { .object(inline($0)) })), ("title", .string(name))]
         case .taggedUnion(let name, let description, let tag, let variants):
-            let objects = variants.map { variant -> JSONValue in
-                guard case .object(_, let description, let properties) = variant.schema else { return .object(inline(variant.schema)) }
-                return .object(object(description: description, properties: properties, tag: (tag, variant.tagValue)))
-            }
-            return Self.described(description) + [("anyOf", .array(objects)), ("title", .string(name))]
+            let references = variants.map { JSONValue.object(taggedVariant($0.schema, tag: (tag, $0.tagValue))) }
+            return Self.described(description) + [("anyOf", .array(references)), ("title", .string(name))]
         default:
             return nil
         }
@@ -128,6 +132,7 @@ private struct StrictSchemaWriter {
             let type: JSONValue = if case .int = values.first { "integer" } else { "string" }
             return Self.described(description) + [("type", type), ("enum", .array(values))]
         case .object(let name, _, _), .union(let name, _, _), .taggedUnion(let name, _, _, _):
+            precondition(!taggedVariantNames.contains(name), Self.sharedVariantMessage(name))
             if definitions[name] == nil {
                 // Reserves the name first, so a model that contains itself ends in a reference.
                 definitions[name] = .null
@@ -163,6 +168,23 @@ private struct StrictSchemaWriter {
             }
             return members
         }
+    }
+
+    /// A tagged union's variant, defined under its payload struct's name as that struct plus the tag property, as
+    /// pydantic defines a variant model with a `Literal` tag field.
+    private mutating func taggedVariant(_ payload: JSONSchema, tag: (key: String, value: String)) -> Members {
+        guard case .object(let name, let description, let properties) = payload else { return inline(payload) }
+        let definition = JSONValue.object(object(description: description, properties: properties, tag: tag) + [("title", .string(name))])
+        let isSameVariant = definitions[name].map { taggedVariantNames.contains(name) && $0.serialized() == definition.serialized() }
+        precondition(isSameVariant ?? true, Self.sharedVariantMessage(name))
+        taggedVariantNames.insert(name)
+        definitions[name] = definition
+        return [("$ref", .string("#/$defs/" + Self.encodedReferenceName(name)))]
+    }
+
+    /// A definition has one body, so a struct can't be a tagged variant and also appear on its own or with another tag.
+    private static func sharedVariantMessage(_ name: String) -> String {
+        "'\(name)' is a tagged union's variant and also appears on its own or with another tag in the same strict schema"
     }
 
     /// The lines of a wrapped doc comment joined with spaces, with blank-line paragraph breaks kept.
@@ -270,7 +292,7 @@ extension JSONValue {
     }
 
     /// OpenAI's strict mode: closed objects whose properties are all required, no `null` defaults, and no `$ref` next
-    /// to other keys.
+    /// to other keys. A port of the SDK's `_ensure_strict_json_schema`.
     ///
     /// - Parameter expanding: The references being inlined around this schema.
     fileprivate func ensuringStrict(root: JSONValue, expanding: inout [String]) -> JSONValue {
