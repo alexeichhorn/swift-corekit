@@ -111,3 +111,31 @@ private let macros = [
         macros: macros
     )
 }
+
+@Test func routesRejectBodySizesThatAreNotByteCounts() {
+    assertExpansion(
+        """
+        @POST(orderRouter, "/", maxBodySize: "10 mb")
+        func createOrder(body: CreateOrderInput) async throws {}
+
+        @POST(orderRouter, "/", maxBodySize: "1.5mb")
+        func createOrder(body: CreateOrderInput) async throws {}
+
+        @POST(orderRouter, "/", maxBodySize: "9999999999gb")
+        func createOrder(body: CreateOrderInput) async throws {}
+        """,
+        expandedSource: """
+            func createOrder(body: CreateOrderInput) async throws {}
+            func createOrder(body: CreateOrderInput) async throws {}
+            func createOrder(body: CreateOrderInput) async throws {}
+            """,
+        diagnostics: ["10 mb", "1.5mb", "9999999999gb"].enumerated().map { index, size in
+            DiagnosticSpec(
+                message: "maxBodySize \"\(size)\" isn't a byte count: write a whole number with an optional b, kb, mb or gb, e.g. \"10mb\"",
+                line: 1 + 3 * index,
+                column: 1
+            )
+        },
+        macros: macros
+    )
+}
