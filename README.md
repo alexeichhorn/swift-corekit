@@ -38,6 +38,40 @@ doc comments become descriptions, a property's initial value is used when its ke
 tagged or untagged unions. `@Length`, `@Range` and `@Pattern` add constraints that go into the schema and into
 `validate()`. See [Schemas](docs/schemas.md).
 
+## Environment configuration
+
+```swift
+@EnvConfig
+struct Env {
+    var databaseURL: String         // DATABASE_URL, required
+    var appEnv: String = "local"    // APP_ENV, defaults to "local"
+    var port: Int = 8000
+    var paymentAPIKey: Secret?      // PAYMENT_API_KEY, optional
+    var devMode: Bool = false       // true/false, yes/no, 1/0
+    @Range(1...) var concurrency: Int = 4
+    var allowedHosts: [String]      // ALLOWED_HOSTS=a.example, b.example
+    var logFormat: LogFormat = .text
+}
+
+enum LogFormat: String, EnvValue { case text, json }
+
+let env = Env.load()
+```
+
+- Names are SCREAMING_SNAKE_CASE of the property; an acronym run ends before a capitalized word
+  (`databaseURL` → `DATABASE_URL`, `openaiAPIKey` → `OPENAI_API_KEY`, but `openAIAPIKey` → `OPEN_AIAPI_KEY`) and keeps
+  a plural `s` (`allowedHostIDs` → `ALLOWED_HOST_IDS`).
+- Process environment variables override the working directory's `.env`. Reading goes through `swift-configuration`.
+- Missing required variables stop the process with one message listing all of them; invalid values name the key.
+- Values are trimmed, and a variable that is empty after trimming counts as missing: a required one is reported, an
+  optional one is `nil` or its default.
+- Property types: `String`, `Int`, `Double`, `Bool`, `Secret`, `[String]`, `String` raw-value enums that conform to
+  `EnvValue`, and their Optionals.
+- `[String]` reads a comma-separated value; entries are trimmed and empty ones dropped. A required list without
+  entries counts as missing.
+- `@Range` on a numeric property stops `load()` when the value, or the default, is outside the range. An unknown enum
+  value stops it too.
+
 ## Secrets
 
 ```swift

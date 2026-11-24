@@ -36,6 +36,8 @@ alone, never a project that uses it.
 
 - `swift test` runs everything: unit tests, macro expansion tests, compile-fail fixtures, and the HTTP and route tests,
   which start their own local servers.
+- Tests that read the process environment use variables starting with `COREKIT_TEST_`, and a test of a call that
+  stops the process runs it in an exit test (`#expect(processExitsWith:)`).
 - Macro expansion tests live in `Tests/CoreKitMacrosTests` and call `assertExpansion`. A diagnostic that only a real
   build shows, such as a `Sendable` error in expanded code, gets a compile-fail fixture.
 - A compile-fail fixture in `Tests/CompileFail/Sources/Fixtures` marks each line that must fail with
