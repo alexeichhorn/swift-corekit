@@ -76,6 +76,22 @@ let page = try await retry(maxRetries: 2) { try await withTimeout(.seconds(30)) 
 - With a timeout the body runs in a child task, so the function's parameters and result, and `self` in a method, must
   be `Sendable`. `@Retry` without `timeout:` has no such requirement.
 
+## Logging
+
+`CompactLogHandler` is a swift-log handler that writes one coloured line per message to standard output, in the
+compact form of Rust's `tracing`: time, level, logger label, message, then the metadata as `key=value` sorted by key.
+
+```swift
+LoggingSystem.bootstrap { CompactLogHandler(label: $0, logLevel: .info) }
+// 2026-01-02T03:04:05.678901Z  INFO order-api: Created order id=42 owner=alice
+```
+
+The colours are ANSI codes and are written whether or not the output is a terminal, so a log viewer that renders
+them shows `ERROR` in red, `WARN` in yellow and `INFO` in green.
+
+`withLogMetadata(["order_id": "42"]) { ... }` puts its metadata on every line logged inside the closure, by any
+logger and by the tasks started in it, so code that knows nothing about the order still logs its id. Calls nest.
+
 ## Strings and bytes
 
 `text.prefix(bytes: 500)` cuts a string to at most that many bytes of UTF-8 without splitting a code point, for limits
