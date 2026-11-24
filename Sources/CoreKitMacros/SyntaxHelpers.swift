@@ -107,15 +107,9 @@ func optionalStringLiteral(_ content: String?) -> String {
     content.map(stringLiteral) ?? "nil"
 }
 
-/// The value of a string literal without interpolations, e.g. a route path.
+/// The value of a string literal without interpolations, with its escapes interpreted, e.g. a route path.
 func literalValue(of expression: ExprSyntax) -> String? {
-    guard let literal = expression.as(StringLiteralExprSyntax.self) else { return nil }
-    var value = ""
-    for segment in literal.segments {
-        guard let text = segment.as(StringSegmentSyntax.self)?.content.text else { return nil }
-        value += text
-    }
-    return value
+    expression.as(StringLiteralExprSyntax.self)?.representedLiteralValue
 }
 
 /// Indents every line after the first, for multi-line code interpolated at an indented position.
