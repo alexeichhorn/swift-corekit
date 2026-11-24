@@ -105,10 +105,23 @@ extension JSONValue {
     /// Reads the value as a `Decodable` type: `let settings = try payload.decode(Settings.self)`. Dates are read as
     /// ISO-8601, with or without fractional seconds, as `OrderedJSONEncoder` and route responses write them.
     public func decode<Value: Decodable>(_ type: Value.Type = Value.self) throws -> Value {
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        return try decoder.decode(type, from: Data(serialized().utf8))
+        try Self.decoder.decode(type, from: Data(serialized().utf8))
     }
+
+    /// `.iso8601` reads fractional seconds only from macOS 26 on, so the style follows the string.
+    private static let decoder: JSONDecoder = {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .custom { decoder in
+            let container = try decoder.singleValueContainer()
+            let string = try container.decode(String.self)
+            let style = Date.ISO8601FormatStyle(includingFractionalSeconds: string.contains("."))
+            guard let date = try? style.parse(string) else {
+                throw DecodingError.dataCorruptedError(in: container, debugDescription: "Expected an ISO-8601 date, found \(string)")
+            }
+            return date
+        }
+        return decoder
+    }()
 }
 
 extension JSONValue: Encodable {
