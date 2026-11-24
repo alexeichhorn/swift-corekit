@@ -1,3 +1,4 @@
+import SwiftParser
 import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
@@ -51,7 +52,7 @@ public struct RouteMacro: PeerMacro {
         let router = unlabeled[0].trimmedDescription
         let maxBodySize = arguments.first { $0.label?.text == "maxBodySize" }?.expression
         // `ByteCount` reads the literal on every request and traps on text it can't read, so it's checked here.
-        if let maxBodySize, let size = literalValue(of: maxBodySize), byteCount(size) == nil {
+        if let size = maxBodySize?.as(StringLiteralExprSyntax.self)?.representedLiteralValue, byteCount(size) == nil {
             throw MacroError(
                 "maxBodySize \"\(size)\" isn't a byte count: write a whole number with an optional b, kb, mb or gb, e.g. \"10mb\""
             )
