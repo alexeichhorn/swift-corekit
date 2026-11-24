@@ -51,6 +51,6 @@ alone, never a project that uses it.
 
 - Format before committing: `swift format --in-place --recursive Sources Tests Package.swift`. CI lints the same paths
   with `--strict`.
-- CI builds and tests on Linux and macOS. The library deploys on Linux, and route discovery differs there: the route
-  macros write records to an ELF section that `CCoreKitRoutes` reads, where macOS asks dyld. Use Foundation and the
+- CI builds and tests on Linux, where the library deploys. Route discovery differs there: the route macros write
+  records to an ELF section that `CCoreKitRoutes` reads, where macOS asks dyld; run `swift test` on macOS yourself. Use Foundation and the
   NIO libraries, and keep Apple-only frameworks behind `#if canImport`.
