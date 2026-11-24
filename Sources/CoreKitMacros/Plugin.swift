@@ -7,6 +7,7 @@ struct CoreKitMacrosPlugin: CompilerPlugin {
         SchemaMacro.self,
         EnvConfigMacro.self,
         PublicInitMacro.self,
+        RouteMacro.self,
         ConstraintMacro.self,
         UnionCaseMacro.self,
         RetryMacro.self,

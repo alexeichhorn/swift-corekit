@@ -7,6 +7,7 @@ let package = Package(
     platforms: [.macOS(.v15)],
     products: [
         .library(name: "CoreKit", targets: ["CoreKit"]),
+        .library(name: "CoreKitHummingbird", targets: ["CoreKitHummingbird"]),
         .library(name: "CoreKitHTTPClient", targets: ["CoreKitHTTPClient"]),
     ],
     dependencies: [
@@ -36,6 +37,18 @@ let package = Package(
                 "CoreKitMacros",
                 .product(name: "Configuration", package: "swift-configuration"),
                 .product(name: "Logging", package: "swift-log"),
+            ]
+        ),
+        // Reads the ELF section the route macros write to; macOS uses dyld instead.
+        .target(name: "CCoreKitRoutes"),
+        .target(
+            name: "CoreKitHummingbird",
+            dependencies: [
+                "CCoreKitRoutes",
+                "CoreKit",
+                "CoreKitMacros",
+                .product(name: "Hummingbird", package: "hummingbird"),
+                .product(name: "MultipartKit", package: "multipart-kit"),
             ]
         ),
         .target(
